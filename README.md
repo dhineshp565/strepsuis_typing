@@ -4,12 +4,13 @@
 Pipeline for whole genome assembly and analysis of Streptococccus suis. Works only for Oxford nanopore reads
 
 
-# Pipeline is based on this paper
-" Athey, T.B.T., Teatero, S., Lacouture, S. et al. Determining Streptococcus suis serotype from short-read whole-genome sequencing data. BMC Microbiol 16, 162 (2016). https://doi.org/10.1186/s12866-016-0782-8 "
+## Pipeline is based on this paper
+Athey, T.B.T., Teatero, S., Lacouture, S. et al. Determining Streptococcus suis serotype from short-read whole-genome sequencing data. BMC Microbiol 16, 162 (2016). https://doi.org/10.1186/s12866-016-0782-8 
 
-Requires input directory containg sub-directories with the fastq files and output directory. Outputs several intermediate files with a html report with AMR,MLST,Serotyping and virulence factors found in the sample. 
+ 
 
-Usage
+### Usage
+Requires input directory containg sub-directories with the fastq files and output directory. Outputs several intermediate files with a html report with AMR,MLST,Serotyping and virulence factors found in the sample.
 ```
 nextflow run main.nf --input sampleslist.csv --outdir Results_mannheimia_2 -profile docker --trim_barcodes
 ```
@@ -21,11 +22,11 @@ Parameters:
 optional
 --trim_barcodes barcode and adapter trimming using porechop
 ```
-## Dependencies
+### Dependencies
 * nextflow
 * docker
 * wsl2
-## Software and references used
+### Software and references used
 * dragonflye (https://github.com/rpetit3/dragonflye)
 * Database for serotyping and virulence typing was constrcuted using sequences from https://github.com/streplab/SsuisSerotyping_pipeline 
 * porechop (https://github.com/rrwick/Porechop)
