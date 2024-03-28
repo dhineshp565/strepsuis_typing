@@ -1,7 +1,7 @@
 # Streptococcus suis whole genome assembly and typing pipeline
 
 
-Pipeline for whole genome assembly and analysis of Streptococccus suis. Works only for Oxford nanopore reads
+Pipeline for whole genome assembly and analysis of Streptococccus suis. Works only for Oxford Nanopore reads
 
 
 ## Pipeline is based on this paper
