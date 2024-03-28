@@ -28,7 +28,8 @@
                     "type": "string",
                     "fa_icon": "fas fa-folder-open",
                     "description": "Path to output directory",
-                    "format": "directory-path"
+                    "format": "directory-path",
+                    "default": "Results"
                 }
             }
         },
@@ -40,9 +41,9 @@
             "properties": {
                 "trim_barcodes": {
                     "type": "string",
-                    "description": "Select YES for trimming barcodes and adapter sequences",
+                    "description": "Select Yes for trimming barcodes and adapter sequences",
                     "enum": [
-                        "YES"
+                        "Yes"
                     ]
                 }
             }
