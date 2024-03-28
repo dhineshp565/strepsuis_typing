@@ -1,2 +1,3 @@
-# srepsuis_typing
-Whole genome sequenicng and analysis of Streptocoocus suis isolates
+# salmonella_serotyping
+Streptococcus suis whole genome assembly and serotyping
+Uses dragonflye for whole genome assembly

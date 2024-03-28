@@ -1,0 +1,79 @@
+---
+title: "Streptococcus suis Typing Report" 
+date: "`r Sys.Date()`"
+output: html_document
+params:
+  sero: ""
+  mlst: ""
+  csv : ""
+---
+```{css, echo=FALSE}
+.table caption {
+    color: darkblue;
+    font-weight: bold;
+}
+```
+```{css, echo = FALSE}
+  .nav-pills>li>a:hover, .nav-pills>li>a:focus, .nav-pills>li.active>a,     .nav-pills>li.active>a:hover, .nav-pills>li.active>a:focus{
+     background-color: darkblue;
+     }
+```
+
+<br>
+
+
+### TYPING RESULTS
+```{r, results='asis',echo=FALSE}
+  
+  sero_raw <- read.csv(params$sero,header = TRUE,sep = "\t")
+  colnames(sero_raw) <- c("SAMPLE","GENE","%COVERAGE","%IDENTITY","SEROTYPE")
+  print(knitr::kable(sero_raw,align='lcccl',caption = "Serotype - \n Predicted based on capsular polysaccharides(cps).For more info please see https://doi.org/10.1186/s12866-016-0782-8"))
+  cat("\n")
+
+  mlst_raw <- read.csv(params$mlst,header = TRUE,sep = "\t")
+  print(knitr::kable(mlst_raw,align= 'lccccccccr',caption = "MLST - \n Predicted using https://pubmlst.org/ and MLST tool (https://github.com/tseemann/mlst)"))
+  cat("\n")
+  
+ 
+```
+<br>
+
+<br>
+
+### AMR,VF and BUSCO RESULTS {.tabset .tabset-pills}
+```{r, results='asis',echo=FALSE}
+
+  samplelist <- read.csv(params$csv,header=FALSE,sep = ',')[-1,]
+  sampleid <- samplelist[,c(1)]
+  for (i in sampleid){
+
+    cat("\n")
+    cat("####", i, "\n")
+  
+  
+    vf_id <- (paste(i,"_vf.csv",sep=""))
+    vf_raw <- read.csv(vf_id,header = TRUE,sep="\t")
+    vf_final <- vf_raw[,c(1,6,10,11,15)]
+    colnames(vf_final) <- c("SAMPLE","GENE","%COVERAGE","%IDENTITY","VIRULENCE FACTOR")
+    print(knitr::kable(vf_final,align= 'lcccl',caption = "Virulence factors - \n Predicted based on https://doi.org/10.1186/s12866-016-0782-8 using abricate tool"))
+    cat("\n")
+
+    amr_id <- (paste(i,"_AMR.csv",sep=""))
+    amr_raw <- read.csv( amr_id,header = TRUE,sep="\t")
+    amr_final <- amr_raw[,c(1,6,10,11,15)]
+    colnames(amr_final) <- c("SAMPLE","GENE","%COVERAGE","%IDENTITY","AMR GENE")
+    print(knitr::kable(amr_final,align= 'lcccl',caption = "AMR - \n Predicted based using abricate tool and CARD database (https://card.mcmaster.ca/)"))
+    cat("\n")
+
+    
+    busco_id <- (paste(i,"_busco.txt",sep=""))
+    busco_file <- readLines(busco_id)
+    # Display the content
+    cat("```\n")
+    cat(busco_file, sep = "\n")
+    cat("\n```\n")
+    }
+
+
+```
+<br>
