@@ -4,8 +4,8 @@
 Pipeline for whole genome assembly and analysis of Streptococccus suis. Works only for Oxford nanopore reads
 
 
-Pipeline is based on this paper 
-Athey, T.B.T., Teatero, S., Lacouture, S. et al. Determining Streptococcus suis serotype from short-read whole-genome sequencing data. BMC Microbiol 16, 162 (2016). https://doi.org/10.1186/s12866-016-0782-8
+Pipeline is based on this paper\n
+" Athey, T.B.T., Teatero, S., Lacouture, S. et al. Determining Streptococcus suis serotype from short-read whole-genome sequencing data. BMC Microbiol 16, 162 (2016). https://doi.org/10.1186/s12866-016-0782-8 "
 
 Requires input directory containg sub-directories with the fastq files and output directory. Outputs several intermediate files with a html report with AMR,MLST,Serotyping and virulence factors found in the sample. 
 
