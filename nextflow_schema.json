@@ -2,7 +2,7 @@
     "$schema": "http://json-schema.org/draft-07/schema",
     "$id": "https://raw.githubusercontent.com/strepsuis_typing/master/nextflow_schema.json",
     "title": "strepsuis_typing pipeline parameters",
-    "description": "Pipeline for Salmonella serotyping",
+    "description": "Pipeline for whole genome assembly and analysis of Streptococcus suis isolates",
     "type": "object",
     "definitions": {
         "input_output_options": {
