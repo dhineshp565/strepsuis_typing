@@ -20,7 +20,7 @@ Parameters:
 --out_dir	Output directory
 optional
 --trim_barcodes barcode and adapter trimming using porechop
-``
+```
 ## Dependencies
 * nextflow
 * docker
