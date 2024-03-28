@@ -1,0 +1,59 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "https://raw.githubusercontent.com/strepsuis_typing/master/nextflow_schema.json",
+    "title": "strepsuis_typing pipeline parameters",
+    "description": "Pipeline for Salmonella serotyping",
+    "type": "object",
+    "definitions": {
+        "input_output_options": {
+            "title": "Input/output options",
+            "type": "object",
+            "fa_icon": "fas fa-terminal",
+            "description": "Define where the pipeline should find input data and save output data.",
+            "required": [
+                "input",
+                "out_dir"
+            ],
+            "properties": {
+                "input": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "exists": true,
+                    "mimetype": "text/csv",
+                    "description": "Path to input directory containg fastq directories",
+                    "help_text": "You will need to create a design file with information about the samples in your experiment before running the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with 3 columns, and a header row.",
+                    "fa_icon": "fas fa-folder-open"
+                },
+                "out_dir": {
+                    "type": "string",
+                    "fa_icon": "fas fa-folder-open",
+                    "description": "Path to output directory",
+                    "format": "directory-path"
+                }
+            }
+        },
+        "optional": {
+            "title": "Optional",
+            "type": "object",
+            "description": "",
+            "default": "",
+            "properties": {
+                "trim_barcodes": {
+                    "type": "string",
+                    "description": "Select YES for trimming barcodes and adapter sequences",
+                    "enum": [
+                        "YES"
+                    ]
+                }
+            }
+        }
+    },
+    "allOf": [
+        {
+            "$ref": "#/definitions/input_output_options"
+        },
+        {
+            "$ref": "#/definitions/optional"
+        }
+    ]
+}

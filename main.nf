@@ -209,48 +209,6 @@ process serotype {
 }
 
     
-process resolve_sero {
-		publishDir "${params.out_dir}/res_serotype/",mode:"copy"
-		label "medium"
-        input:
-        tuple val(SampleName),path(assembly)
-		path(reference)
-		tuple val(SampleName),path(serotypefile)
-		output:
-		path ("${SampleName}_serotype.csv"),emit:sero
-		path ("${SampleName}_vcf.csv"),emit:vcf
-		script:
-        """
-		if grep -wq "cps-1" ${serotypefile} || grep -wq "cps-2" ${serotypefile};then
-
-			minimap2 -ax map-ont ${reference} ${assembly} > ${SampleName}.sam
-			samtools view -b -S ${SampleName}.sam > ${SampleName}.bam
-			samtools sort ${SampleName}.bam > ${SampleName}_sorted.bam
-			samtools faidx ${reference} 
-			samtools index ${SampleName}_sorted.bam > ${SampleName}_sorted.bai
-			bcftools mpileup -Ob -f ${reference} ${SampleName}_sorted.bam > ${SampleName}.bcf
-			bcftools call -mv -Ob ${SampleName}.bcf > ${SampleName}.vcf
-			bcftools view ${SampleName}.vcf > ${SampleName}_vcf.csv
-			if grep -q -e "cps-2" ${serotypefile} && grep -q -e "483" ${SampleName}_vcf.csv ;then
-				sed -i 's,serotype-2,serotype-1/2,g' ${serotypefile}
-				sed -i 's/_flye.fasta//g' ${serotypefile}
-				cut -f 1,2,6,10,11,15 ${serotypefile} > ${SampleName}_serotype.csv
-			fi
-			if grep -q -e "cps-1" ${serotypefile} && grep -q -e "483" ${SampleName}_vcf.csv ;then
-				sed -i 's,serotype-1,serotype-14,g' ${serotypefile}
-				sed -i 's,_flye.fasta,,g' ${serotypefile}
-				cut -f 1,2,6,10,11,15 ${serotypefile} > ${SampleName}_serotype.csv
-			fi
-		else
-				sed -i 's,_flye.fasta,,g' ${serotypefile}
-				cut -f 1,2,6,10,11,15 ${serotypefile} > ${SampleName}_serotype.csv
-				echo "no vcf" > ${SampleName}_vcf.csv
-		fi
-
-
-        """
-
-}
 
 process make_limsfile {
 	label "low"
@@ -263,6 +221,7 @@ process make_limsfile {
 	path("Ssuis_MLST_file.csv")
 	script:
 	"""
+	# merge serotyping and mlst results
 	awk 'FNR==1 && NR!=1 { while (/^#F/) getline; } 1 {print}' ${serotyping_results} > Ssuis_sero_file.csv
 	sed -i 's/#FILE/id/g' Ssuis_sero_file.csv
 	awk 'FNR==1 && NR!=1 { while (/^FILE/) getline; } 1 {print}' ${mlst_results} > Ssuis_MLST_file.csv
@@ -316,19 +275,23 @@ workflow {
         dragonflye(merge_fastq.out)           
     }
 	versionfile=file("${baseDir}/software_version.csv")
+	//checking completeness of assembly
     busco(dragonflye.out.assembly)
+	//mlst
     mlst (dragonflye.out.assembly)
+	//abricate AMR,serotyping and virulence factors
 	sero_db=("${baseDir}/Ssuis_serotype_db")
 	vcf_db=("${baseDir}/Ssuis_VF_db")
     abricate (dragonflye.out.assembly,sero_db,vcf_db)
 	reference=file("${baseDir}/Ssuis_cps2K.fasta")
+	//variant calling to resolve serotype
 	minimap2 (dragonflye.out.assembly,reference)
 	samtools(minimap2.out,reference)
 	bcftools(samtools.out)
 	serotype(abricate.out.sero.collect(),bcftools.out.collect(),make_csv.out)
-    //resolve_sero(dragonflye.out.assembly,reference,abricate.out)
+    //make lims file
     make_limsfile (serotype.out.collect(),mlst.out.collect())
-	
+	//report generation
 
 	rmd_file=file("${baseDir}/Ssuis_report.Rmd")
 	make_report (rmd_file,make_limsfile.out,busco.out.collect(),make_csv.out,abricate.out.vif.collect(),abricate.out.AMR.collect())
