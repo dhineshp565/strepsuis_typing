@@ -69,13 +69,14 @@ process dragonflye {
     publishDir "${params.out_dir}/Assembly",mode:"copy"
     input:
     tuple val(SampleName),path(SamplePath)
+	medaka_model
     output:
     val(SampleName),emit:sample
 	tuple val(SampleName),path("${SampleName}_flye.fasta"),emit:assembly
 	path("${SampleName}_flye-info.txt"),emit:flyeinfo
     script:
     """
-    dragonflye --reads ${SamplePath} --outdir ${SampleName}_assembly --model r941_e81_hac_g514 --gsize 2.4M --nanohq --medaka 1
+    dragonflye --reads ${SamplePath} --outdir ${SampleName}_assembly --model ${medaka_model} --gsize 2.4M --nanohq --medaka 1
     # rename fasta file with samplename
     mv "${SampleName}_assembly"/flye.fasta "${SampleName}"_flye.fasta
     # rename fasta header with samplename
@@ -231,7 +232,7 @@ process make_limsfile {
 
 process make_report {
 	label "low"
-	publishDir "${params.out_dir}/",mode:"copy"
+	publishDir "${params.out_dir}/reports",mode:"copy"
 	input:
 	path(rmdfile)
 	path(serofile)
@@ -270,9 +271,9 @@ workflow {
 	// based on the optional argument trim barcodes using porechop and assemble using dragonflye
     if (params.trim_barcodes){
 		porechop(merge_fastq.out)
-		dragonflye(porechop.out) 
+		dragonflye(porechop.out,params.medaka_model) 
 	} else {
-        dragonflye(merge_fastq.out)           
+        dragonflye(merge_fastq.out,params.medaka_model)           
     }
 	versionfile=file("${baseDir}/software_version.csv")
 	//checking completeness of assembly

@@ -45,6 +45,15 @@
                     "enum": [
                         "Yes"
                     ]
+                },
+                "medaka_model": {
+                    "type": "string",
+                    "default": "r1041_e82_400bps_sup_g615",
+                    "description": "Select basecalling model for medaka genome polishing",
+                    "enum": [
+                        "r1041_e82_400bps_sup_g615",
+                        "r941_e81_hac_g514"
+                    ]
                 }
             }
         }
