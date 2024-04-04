@@ -69,7 +69,7 @@ process dragonflye {
     publishDir "${params.out_dir}/Assembly",mode:"copy"
     input:
     tuple val(SampleName),path(SamplePath)
-	medaka_model
+	val(medaka_model)
     output:
     val(SampleName),emit:sample
 	tuple val(SampleName),path("${SampleName}_flye.fasta"),emit:assembly
@@ -232,7 +232,7 @@ process make_limsfile {
 
 process make_report {
 	label "low"
-	publishDir "${params.out_dir}/reports",mode:"copy"
+	publishDir "${params.out_dir}/",mode:"copy"
 	input:
 	path(rmdfile)
 	path(serofile)
