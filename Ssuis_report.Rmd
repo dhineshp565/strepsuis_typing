@@ -26,8 +26,9 @@ params:
 ```{r, results='asis',echo=FALSE}
   
   sero_raw <- read.csv(params$sero,header = TRUE,sep = "\t")
-  colnames(sero_raw) <- c("SAMPLE","GENE","%COVERAGE","%IDENTITY","SEROTYPE")
-  print(knitr::kable(sero_raw,align='lcccl',caption = "Serotype - \n Predicted based on capsular polysaccharides(cps).For more info please see https://doi.org/10.1186/s12866-016-0782-8"))
+  sero_final<- sero_raw[,c(1,6,10,11,15)]
+  colnames(sero_final) <- c("SAMPLE","GENE","%COVERAGE","%IDENTITY","SEROTYPE")
+  print(knitr::kable(sero_final,align='lcccl',caption = "Serotype - \n Predicted based on capsular polysaccharides(cps).For more info please see https://doi.org/10.1186/s12866-016-0782-8"))
   cat("\n")
 
   mlst_raw <- read.csv(params$mlst,header = TRUE,sep = "\t")

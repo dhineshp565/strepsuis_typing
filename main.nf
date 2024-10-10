@@ -113,7 +113,7 @@ process mlst {
 	path("${SampleName}_MLST.csv")
 	script:
 	"""
-	mlst --legacy --scheme ssuis ${consensus} > ${SampleName}_MLST.csv
+	mlst ${consensus} > ${SampleName}_MLST.csv
 	sed -i 's,_flye.fasta,,g' ${SampleName}_MLST.csv
 	"""
 }
@@ -137,6 +137,7 @@ process abricate{
 	sed -i 's,_flye.fasta,,g' ${SampleName}_vf.csv
 	abricate --db card ${consensus} 1> ${SampleName}_AMR.csv
 	sed -i 's,_flye.fasta,,g' ${SampleName}_AMR.csv
+	cat *vf.csv > sample_vf.csv
 	
 	"""
 	
@@ -201,7 +202,7 @@ process serotype {
 	path(vcf_file)
 	path(csvfile)
 	output:
-	path ("*_serotype.csv")
+	path ("*serotype.csv")
 	script:
 	"""
 	
@@ -209,24 +210,31 @@ process serotype {
 	"""
 }
 
-    
 
 process make_limsfile {
 	label "low"
 	publishDir "${params.out_dir}/LIMS",mode:"copy"
 	input:
 	path (serotyping_results)
+	path (vf_results)
+	path (amr_results)
 	path (mlst_results)
+	path (software_version)
 	output:
-	path("Ssuis_sero_file.csv")
-	path("Ssuis_MLST_file.csv")
+	path("*_LIMS_file.csv")
+	path("sero_file.csv"),emit:sero
+	path("MLST_file.csv"),emit:mlst
+	
 	script:
 	"""
-	# merge serotyping and mlst results
-	awk 'FNR==1 && NR!=1 { while (/^#F/) getline; } 1 {print}' ${serotyping_results} > Ssuis_sero_file.csv
-	sed -i 's/#FILE/id/g' Ssuis_sero_file.csv
-	awk 'FNR==1 && NR!=1 { while (/^FILE/) getline; } 1 {print}' ${mlst_results} > Ssuis_MLST_file.csv
-	sed -i 's/FILE/id/g' Ssuis_MLST_file.csv
+	LIMS_file.sh
+	
+	
+	awk 'FNR==1 && NR!=1 { while (/^#F/) getline; } 1 {print}' ${mlst_results} > MLST_file.csv
+	# add header to mlst file
+	sed -i \$'1 i\\\nSAMPLE\tSCHEME\tST\taroA\tcpn60\tdpr\tgki\tmutS\trecA\tthrA' MLST_file.csv
+	
+
 	"""
 }
 
@@ -250,8 +258,8 @@ process make_report {
 	
 	cp ${rmdfile} rmdfile_copy.Rmd
 	cp ${samplelist} samples.csv
-	cp ${serofile} serofile.csv
 	cp ${mlstfile} mlstfile.csv
+	cp ${serofile} serofile.csv
 
 	Rscript -e 'rmarkdown::render(input="rmdfile_copy.Rmd",params=list(sero="serofile.csv",mlst="mlstfile.csv",csv="samples.csv"),output_file="Ssuis_report.html")'
 	"""
@@ -262,10 +270,13 @@ process make_report {
 
 
 
+
+
 workflow {
     data=Channel
 	.fromPath(params.input)
 	merge_fastq(make_csv(data).splitCsv(header:true).map { row-> tuple(row.SampleName,row.SamplePath)})
+	
 	// Merge fastq files for each sample
 
 	// based on the optional argument trim barcodes using porechop and assemble using dragonflye
@@ -290,12 +301,15 @@ workflow {
 	samtools(minimap2.out,reference)
 	bcftools(samtools.out)
 	serotype(abricate.out.sero.collect(),bcftools.out.collect(),make_csv.out)
-    //make lims file
-    make_limsfile (serotype.out.collect(),mlst.out.collect())
+    
+	versionfile=file("${baseDir}/software_version.csv")
+	//make lims file
+    make_limsfile (serotype.out.collect(),abricate.out.vif.collect(),abricate.out.AMR.collect(),mlst.out.collect(),versionfile)
+	
 	//report generation
 
 	rmd_file=file("${baseDir}/Ssuis_report.Rmd")
-	make_report (rmd_file,make_limsfile.out,busco.out.collect(),make_csv.out,abricate.out.vif.collect(),abricate.out.AMR.collect())
+	make_report (rmd_file,make_limsfile.out.sero,make_limsfile.out.mlst,busco.out.collect(),make_csv.out,abricate.out.vif.collect(),abricate.out.AMR.collect())
 
 
 }

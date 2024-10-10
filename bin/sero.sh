@@ -8,10 +8,10 @@ sed '1d' $1 | while IFS=, read -r sample _; do
         # Replace the serotype-14 with serotype-1
         sed -i 's,serotype-14,serotype-1,g' "${sample}_sero.csv"
         sed -i 's/_flye.fasta//g' "${sample}_sero.csv"
-        cut -f 1,6,10,11,15 "${sample}_sero.csv" > "${sample}_serotype.csv"
+        cat ${sample}_sero.csv > "${sample}_serotype.csv"
     else
         # No snp at position 483
         sed -i 's,_flye.fasta,,g' "${sample}_sero.csv"
-        cut -f 1,6,10,11,15 "${sample}_sero.csv" > "${sample}_serotype.csv"
+        cat ${sample}_sero.csv > "${sample}_serotype.csv"
     fi
 done
