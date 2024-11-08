@@ -71,12 +71,11 @@ process dragonflye {
     tuple val(SampleName),path(SamplePath)
 	val(medaka_model)
     output:
-    val(SampleName),emit:sample
-	tuple val(SampleName),path("${SampleName}_flye.fasta"),emit:assembly
+	tuple val(SampleName),path("${SampleName}_flye.fasta")
 	path("${SampleName}_flye-info.txt"),emit:flyeinfo
     script:
     """
-    dragonflye --reads ${SamplePath} --outdir ${SampleName}_assembly --model ${medaka_model} --gsize 2.4M --nanohq --medaka 1
+    dragonflye --reads ${SamplePath} --outdir ${SampleName}_assembly --gsize 2.4M --nanohq 
     # rename fasta file with samplename
     mv "${SampleName}_assembly"/flye.fasta "${SampleName}"_flye.fasta
     # rename fasta header with samplename
@@ -85,6 +84,31 @@ process dragonflye {
     mv "${SampleName}_assembly"/flye-info.txt "${SampleName}"_flye-info.txt
     sed -i 's/contig/${SampleName}_contig/g' "${SampleName}_flye-info.txt"
     """
+}
+
+
+process medaka {
+	publishDir "${params.out_dir}/medaka",mode:"copy"
+	label "high"
+	input:
+	tuple val(SampleName),path(SamplePath)
+	tuple val(SampleName),path(draft_assembly)
+	path("${SampleName}_flye-info.txt")
+	val (medaka_model)
+	output:
+	tuple val(SampleName),emit:sample
+	tuple val(SampleName),path("${SampleName}_assembly.fasta"),emit:assembly
+	path("${SampleName}_flye-info.txt"),emit:flyeinfo
+	
+	script:
+	"""
+	
+	medaka_consensus -i ${SamplePath} -d ${draft_assembly} -o ${SampleName}_medaka_assembly --bacteria
+		
+	mv ${SampleName}_medaka_assembly/consensus.fasta ${SampleName}_assembly.fasta
+	
+	"""
+
 }
 
 
@@ -108,13 +132,13 @@ process mlst {
 	publishDir "${params.out_dir}/mlst/",mode:"copy"
 	label "low"
 	input:
-	tuple val(SampleName),path(consensus)
+	tuple val(SampleName),path(assembly)
 	output:
 	path("${SampleName}_MLST.csv")
 	script:
 	"""
-	mlst ${consensus} > ${SampleName}_MLST.csv
-	sed -i 's,_flye.fasta,,g' ${SampleName}_MLST.csv
+	mlst ${assembly} > ${SampleName}_MLST.csv
+	sed -i 's,_assembly.fasta,,g' ${SampleName}_MLST.csv
 	"""
 }
 
@@ -133,10 +157,11 @@ process abricate{
 	script:
 	"""
 	abricate --datadir ${sero_db} --db Ssuis_serotype -minid 60  -mincov 60 --quiet ${consensus} 1> ${SampleName}_sero.csv
+	sed -i 's,_assembly.fasta,,g' ${SampleName}_sero.csv
 	abricate -datadir ${vcf_db} --db Ssuis_vfdb ${consensus} 1> ${SampleName}_vf.csv
-	sed -i 's,_flye.fasta,,g' ${SampleName}_vf.csv
+	sed -i 's,_assembly.fasta,,g' ${SampleName}_vf.csv
 	abricate --db card ${consensus} 1> ${SampleName}_AMR.csv
-	sed -i 's,_flye.fasta,,g' ${SampleName}_AMR.csv
+	sed -i 's,_assembly.fasta,,g' ${SampleName}_AMR.csv
 	cat *vf.csv > sample_vf.csv
 	
 	"""
@@ -279,25 +304,27 @@ workflow {
 	
 	// Merge fastq files for each sample
 
-	// based on the optional argument trim barcodes using porechop and assemble using dragonflye
+	// based on the optional argument trim barcodes using porechop, assemble using dragonflye and polish using medaka
     if (params.trim_barcodes){
 		porechop(merge_fastq.out)
 		dragonflye(porechop.out,params.medaka_model) 
+		medaka(porechop.out,dragonflye.out,params.medaka_model)
 	} else {
-        dragonflye(merge_fastq.out,params.medaka_model)           
+        dragonflye(merge_fastq.out,params.medaka_model) 
+		medaka(merge_fastq.out,dragonflye.out,params.medaka_model)          
     }
 	versionfile=file("${baseDir}/software_version.csv")
 	//checking completeness of assembly
-    busco(dragonflye.out.assembly)
+    busco(medaka.out.assembly)
 	//mlst
-    mlst (dragonflye.out.assembly)
+    mlst (medaka.out.assembly)
 	//abricate AMR,serotyping and virulence factors
 	sero_db=("${baseDir}/Ssuis_serotype_db")
 	vcf_db=("${baseDir}/Ssuis_VF_db")
-    abricate (dragonflye.out.assembly,sero_db,vcf_db)
+    abricate (medaka.out.assembly,sero_db,vcf_db)
 	reference=file("${baseDir}/Ssuis_cps2K.fasta")
 	//variant calling to resolve serotype
-	minimap2 (dragonflye.out.assembly,reference)
+	minimap2 (medaka.out.assembly,reference)
 	samtools(minimap2.out,reference)
 	bcftools(samtools.out)
 	serotype(abricate.out.sero.collect(),bcftools.out.collect(),make_csv.out)
