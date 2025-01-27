@@ -248,16 +248,16 @@ process make_limsfile {
 	output:
 	path("*_LIMS_file.csv")
 	path("sero_file.csv"),emit:sero
-	path("MLST_file.csv"),emit:mlst
+	path("MLST_file_*.csv"),emit:mlst
 	
 	script:
 	"""
 	LIMS_file.sh
 	
-	
+	date=\$(date '+%Y-%m-%d_%H-%M-%S')
 	awk 'FNR==1 && NR!=1 { while (/^#F/) getline; } 1 {print}' ${mlst_results} > MLST_file.csv
 	# add header to mlst file
-	sed -i \$'1 i\\\nSAMPLE\tSCHEME\tST\taroA\tcpn60\tdpr\tgki\tmutS\trecA\tthrA' MLST_file.csv
+	sed -i \$'1 i\\\nSAMPLE\tSCHEME\tST\taroA\tcpn60\tdpr\tgki\tmutS\trecA\tthrA' MLST_file_\${date}.csv
 	
 
 	"""
