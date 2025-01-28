@@ -255,7 +255,7 @@ process make_limsfile {
 	LIMS_file.sh
 	
 	date=\$(date '+%Y-%m-%d_%H-%M-%S')
-	awk 'FNR==1 && NR!=1 { while (/^#F/) getline; } 1 {print}' ${mlst_results} > MLST_file.csv
+	awk 'FNR==1 && NR!=1 { while (/^#F/) getline; } 1 {print}' ${mlst_results} > MLST_file_\${date}.csv
 	# add header to mlst file
 	sed -i \$'1 i\\\nSAMPLE\tSCHEME\tST\taroA\tcpn60\tdpr\tgki\tmutS\trecA\tthrA' MLST_file_\${date}.csv
 	
