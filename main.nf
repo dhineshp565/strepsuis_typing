@@ -148,7 +148,7 @@ process abricate{
 	input:
 	tuple val(SampleName),path(consensus)
 	path(sero_db)
-	path(vcf_db)
+	path(vf_db)
 	output:
 	path("${SampleName}_sero.csv"),emit:sero
 	path("${SampleName}_vf.csv"),emit:vif
@@ -156,13 +156,7 @@ process abricate{
 	
 	script:
 	"""
-	abricate --datadir ${sero_db} --db Ssuis_serotype -minid 60  -mincov 60 --quiet ${consensus} 1> ${SampleName}_sero.csv
-	sed -i 's,_assembly.fasta,,g' ${SampleName}_sero.csv
-	abricate -datadir ${vcf_db} --db Ssuis_vfdb ${consensus} 1> ${SampleName}_vf.csv
-	sed -i 's,_assembly.fasta,,g' ${SampleName}_vf.csv
-	abricate --db card ${consensus} 1> ${SampleName}_AMR.csv
-	sed -i 's,_assembly.fasta,,g' ${SampleName}_AMR.csv
-	cat *vf.csv > sample_vf.csv
+	run_abricate.sh ${SampleName} ${consensus} ${sero_db} ${vf_db}
 	
 	"""
 	
@@ -320,8 +314,8 @@ workflow {
     mlst (medaka.out.assembly)
 	//abricate AMR,serotyping and virulence factors
 	sero_db=("${baseDir}/Ssuis_serotype_db")
-	vcf_db=("${baseDir}/Ssuis_VF_db")
-    abricate (medaka.out.assembly,sero_db,vcf_db)
+	vf_db=("${baseDir}/Ssuis_VF_db")
+    abricate (medaka.out.assembly,sero_db,vf_db)
 	reference=file("${baseDir}/Ssuis_cps2K.fasta")
 	//variant calling to resolve serotype
 	minimap2 (medaka.out.assembly,reference)
